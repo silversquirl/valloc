@@ -208,11 +208,11 @@ static void _valloc_add_block(void *mem, size_t len) {
 }
 
 static void *_valloc_split_block(treap_t *node, size_t len) {
-	size_t left_len = node->len - len, right_len;
-	right_len = left_len/2;
+	size_t left_len = node->len - len;
+	size_t right_len = left_len/2;
 	left_len -= right_len;
 
-	// Place the left over bits back in the pool
+	// Place the leftover bits back in the pool
 	// We don't use _valloc_add_block because there will never be anything to merge with
 	if (left_len >= sizeof (treap_t)) {
 		treap_t *left = node;
@@ -230,12 +230,12 @@ static void *_valloc_split_block(treap_t *node, size_t len) {
 // }}}
 
 // Allocation {{{
-// This is the hint address for the next page to be allocated
-// It is used so that we can attempt to allocate pages adjacent to each other in order to
-// allow merging of blocks across pages
-static void *page_hint = NULL;
-
 static treap_t *_valloc_map(size_t len) {
+	// This is the hint address for the next page to be allocated
+	// It is used so that we can attempt to allocate pages adjacent to each other in order to
+	// allow merging of blocks across pages
+	static void *page_hint = NULL;
+
 	size_t map_len = _valloc_alignup(len, PAGE_SIZE);
 	void *mapped = mmap(page_hint, map_len, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
 	if (mapped == MAP_FAILED) return NULL;
@@ -265,7 +265,6 @@ static void *_valloc_new(size_t len) {
 
 // We do not currently free pages when they are empty.
 // Instead, we release them back into the allocation pool so they can be reused.
-// This allows
 static void _valloc_del(void *mem, size_t len) {
 	_valloc_add_block(mem, len);
 }
@@ -340,7 +339,7 @@ void *valloc(void *mem, size_t len) {
 	}
 
 	// We're gonna be allocating or resizing, so adjust the length to include the header
-	len += sizeof (struct alloc_header);
+	len += sizeof *hdr;
 
 	if (!mem) {
 		// Allocate
